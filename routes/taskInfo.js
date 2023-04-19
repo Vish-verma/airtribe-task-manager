@@ -12,6 +12,25 @@ const routes = express.Router();
 //get all tasks
 routes.get("/", (req, res) => {
   try {
+    let {sortBy , orderBy, isCompleted} = req.query;
+    let airtribeTasks = tasksData.tasks;
+
+    if(sortBy){
+        if(orderBy == 'desc'){
+            airtribeTasks = airtribeTasks.sort((task1,task2)=>{
+                let d1 = new Date(task1.created_at);
+                let d2 = new Date(task2.created_at);
+                return d1.getTime() > d2.getTime();
+            })
+        }else{
+            airtribeTasks = airtribeTasks.sort((task1,task2)=>{
+                let d1 = new Date(task1.created_at);
+                let d2 = new Date(task2.created_at);
+                return d1.getTime() < d2.getTime();
+            })
+        }
+    }
+
     res.status(200);
     res.send(tasksData);
   } catch (err) {
@@ -21,7 +40,6 @@ routes.get("/", (req, res) => {
 });
 
 //get specific task
-
 routes.get("/:taskId", (req, res) => {
   try {
     let airtribeTasks = tasksData.tasks;
