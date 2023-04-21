@@ -23,6 +23,22 @@ class validator {
         }
     }
   
+    static validateTaskObj(taskInfo){
+        if(taskInfo.hasOwnProperty("title") &&
+        taskInfo.hasOwnProperty("description") &&
+        taskInfo.hasOwnProperty("isCompleted") &&
+        taskInfo.hasOwnProperty("id") && 
+        taskInfo.hasOwnProperty("priority")){
+            return {
+                "status": true,
+                "message": "Task has been updated"
+              };
+        }
+        return {
+            "status": false,
+            "message": "Task Info is malformed please provide all the properties"
+          }
+    }
     static validateUniqueTaskId(taskInfo, taskData) {
       let valueFound = taskData.tasks.some(el => el.id === taskInfo.id);
       if(valueFound) return false;

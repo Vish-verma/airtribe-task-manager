@@ -4,15 +4,15 @@ const path = require("path");
 const fs = require("fs");
 const validator = require("../helper/validator");
 //Tasks Data
-const tasksData = require("../tasks.json");
+const tasksData = require("../data/tasks.json");
 
-//routes initialization
-const routes = express.Router();
+//router initialization
+const router = express.Router();
 
 //get all tasks
-routes.get("/", (req, res) => {
+router.get("/", (req, res) => {
   try {
-    let { sortBy, orderBy, isCompleted } = req.query;
+    let { sortBy, orderBy, filterBy , filterValue } = req.query;
     let airtribeTasks = tasksData.tasks;
 
     if (sortBy) {
@@ -20,14 +20,21 @@ routes.get("/", (req, res) => {
         airtribeTasks = airtribeTasks.sort((task1, task2) => {
           let d1 = new Date(task1.created_at);
           let d2 = new Date(task2.created_at);
-          return d1.getTime() > d2.getTime();
+          return d2 - d1;
         });
       } else {
         airtribeTasks = airtribeTasks.sort((task1, task2) => {
           let d1 = new Date(task1.created_at);
           let d2 = new Date(task2.created_at);
-          return d1.getTime() < d2.getTime();
+          return d1 - d2;
         });
+      }
+    }
+    if(filterBy) {
+      if(filterValue == 'true'){
+        airtribeTasks = airtribeTasks.filter((task1) => task1.isCompleted);
+      }else {
+        airtribeTasks = airtribeTasks.filter((task1) => !task1.isCompleted);
       }
     }
     res.status(200);
@@ -39,11 +46,11 @@ routes.get("/", (req, res) => {
 });
 
 //get specific task
-routes.get("/:taskId", (req, res) => {
+router.get("/:taskId", (req, res) => {
   try {
     let airtribeTasks = tasksData.tasks;
     let { taskId } = req.params;
-    let result = airtribeTasks.filter((task) => task.id == taskId);
+    let result = airtribeTasks.find((task) => task.id == taskId);
     if (result) {
       res.status(200);
       res.send(result);
@@ -58,11 +65,13 @@ routes.get("/:taskId", (req, res) => {
 });
 
 //create a task
-routes.post("/", (req, res) => {
+router.post("/", (req, res) => {
   try {
     const taskDetails = req.body;
     let writePath = path.join(__dirname, "../data", "tasks.json");
-    if (validator.validateTaskInfo(taskDetails, tasksData).status) {
+
+    let validationObj = validator.validateTaskInfo(taskDetails, tasksData).status
+    if (validationObj.status) {
       let tempTaskData = { ...tasksData };
       tempTaskData.tasks.push(taskDetails);
       fs.writeFileSync(writePath, JSON.stringify(tempTaskData), {
@@ -70,26 +79,33 @@ routes.post("/", (req, res) => {
         flag: "w",
       });
       res.status(200);
-      res.json(validator.validateCourseInfo(taskDetails, tasksData));
+      res.json({message:validationObj.message});
     } else {
       res.status(400);
       res.json(validator.validateTaskInfo(taskDetails, tasksData));
     }
   } catch (err) {
+    console.log("err",err);
     res.status(500);
-    res.send({ message: "Something went wrong" });
+    res.send({ message: "Something went wrong",...err });
   }
 });
 
 //update a task
-routes.post("/:taskId", (req, res) => {
+router.put("/:taskId", (req, res) => {
   try {
     const taskDetails = req.body;
     const { taskId } = req.params;
     let writePath = path.join(__dirname, "../data", "tasks.json");
-    if (validator.validateTaskInfo(taskDetails, tasksData).status) {
+    let validateObj = validator.validateTaskObj(taskDetails);
+    if (validateObj.status) {
       let tempTaskData = { ...tasksData };
       let isFound = false;
+      if(taskId != taskDetails.id){
+        res.status(400);
+        res.json({message:"something seems suspicious"});
+        return;
+      }
       tempTaskData.tasks = tempTaskData.tasks.map((item) => {
         if (item.id == taskId) {
           isFound = true;
@@ -119,14 +135,14 @@ routes.post("/:taskId", (req, res) => {
 });
 
 //Delete a task
-routes.delete("/:taskId", (req, res) => {
+router.delete("/:taskId", (req, res) => {
   try {
     const { taskId } = req.params;
     let writePath = path.join(__dirname, "../data", "tasks.json");
     let tempTaskData = { ...tasksData };
 
     let isTaskFound = false;
-    tempTaskData.task = tempTaskData.task.filter((item) => {
+    tempTaskData.tasks = tempTaskData.tasks.filter((item) => {
       if (item.id == taskId) {
         isTaskFound = true;
         return false;
@@ -149,3 +165,5 @@ routes.delete("/:taskId", (req, res) => {
     res.send({ message: "Something went wrong" });
   }
 });
+
+module.exports = router;
