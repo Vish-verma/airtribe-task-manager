@@ -4,7 +4,6 @@ class validator {
         taskInfo.hasOwnProperty("description") &&
         taskInfo.hasOwnProperty("isCompleted") &&
         taskInfo.hasOwnProperty("id") && 
-        taskInfo.hasOwnProperty("priority") && 
         this.validateUniqueTaskId(taskInfo, taskData)) {
           return {
             "status": true,
@@ -27,8 +26,7 @@ class validator {
         if(taskInfo.hasOwnProperty("title") &&
         taskInfo.hasOwnProperty("description") &&
         taskInfo.hasOwnProperty("isCompleted") &&
-        taskInfo.hasOwnProperty("id") && 
-        taskInfo.hasOwnProperty("priority")){
+        taskInfo.hasOwnProperty("id")){
             return {
                 "status": true,
                 "message": "Task has been updated"
